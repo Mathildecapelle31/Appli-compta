@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Gestion d’activité – Architecte</title>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f1f4f3;--card:#fbfcfb;--ink:#17262b;--mut:#5d6f73;--line:#cfdad8;--acc:#1f6f78;--acc2:#b4802a;--bad:#a63d2f;--ok:#2e7d52;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#10191c;--card:#172327;--ink:#e6eeee;--mut:#93a8ab;--line:#2a3b40;--acc:#5fb4bd;--acc2:#d9a653;--bad:#e5806f;--ok:#6cc596;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#10191c;--card:#172327;--ink:#e6eeee;--mut:#93a8ab;--line:#2a3b40;--acc:#5fb4bd;--acc2:#d9a653;--bad:#e5806f;--ok:#6cc596;color-scheme:dark}
+*{box-sizing:border-box}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 'Archivo',system-ui,-apple-system,'Segoe UI',sans-serif;font-variant-numeric:tabular-nums}
+main{max-width:980px;margin:0 auto;padding:16px}
+h1{font-size:22px;margin:0 0 2px;letter-spacing:-.01em}
+h2{font-size:16px;margin:24px 0 8px}
+p.s{color:var(--mut);margin:0 0 12px;font-size:13px}
+nav{display:flex;gap:2px;border-bottom:1px solid var(--line);margin:12px 0 16px;overflow-x:auto}
+nav button{background:none;border:0;border-bottom:3px solid transparent;padding:10px 14px;font:inherit;color:var(--mut);cursor:pointer;white-space:nowrap}
+nav button.on{color:var(--ink);border-color:var(--acc);font-weight:600}
+.yr{display:flex;align-items:center;gap:8px}
+.yr button,.btn{font:inherit;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:6px;padding:6px 12px;cursor:pointer}
+.btn.p{background:var(--acc);border-color:var(--acc);color:#fff}
+.btn.d{color:var(--bad)}
+.kp{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.k{background:var(--card);border:1px solid var(--line);border-radius:6px;padding:12px}
+.k small{color:var(--mut);display:block;font-size:12px}
+.k b{font-size:20px;font-weight:600}
+.k.big{grid-column:span 2;border-left:4px solid var(--acc)}
+.k.big b{font-size:26px;color:var(--acc)}
+.tw{overflow-x:auto;background:var(--card);border:1px solid var(--line);border-radius:6px}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{padding:8px 10px;text-align:right;border-bottom:1px solid var(--line);white-space:nowrap}
+th:first-child,td:first-child,td.l,th.l{text-align:left}
+th{font-weight:600;color:var(--mut);font-size:13px}
+tr:last-child td{border-bottom:0}
+tfoot td{font-weight:600}
+.bar{display:inline-block;height:8px;background:var(--acc);border-radius:2px;vertical-align:middle;min-width:1px}
+form.f{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;background:var(--card);border:1px solid var(--line);border-radius:6px;padding:12px;align-items:end}
+label{font-size:12px;color:var(--mut);display:block}
+input,select{width:100%;font:inherit;padding:7px 8px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--ink)}
+input[type=checkbox]{width:auto}
+.tag{font-size:12px;padding:2px 8px;border-radius:10px;border:1px solid var(--line)}
+.tag.ok{color:var(--ok);border-color:var(--ok)}.tag.wa{color:var(--acc2);border-color:var(--acc2)}
+.prog{height:10px;background:var(--line);border-radius:5px;overflow:hidden;margin:6px 0}
+.prog i{display:block;height:100%;background:var(--acc2)}
+.note{font-size:12.5px;color:var(--mut);background:var(--card);border:1px dashed var(--line);border-radius:6px;padding:10px 12px;margin-top:16px}
+.set{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px}
+.empty{padding:18px;color:var(--mut);text-align:center}
+</style>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#1f6f78">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Gestion Archi">
+<link rel="apple-touch-icon" href="icon-192.png">
+</head>
+<body>
+<main>
+<h1>Gestion d’activité</h1>
+<p class="s">Micro-entreprise d’architecte (BNC) · facturation, temps par affaire, revenu net estimé avec l’ARE</p>
+<nav id="nav"></nav>
+<div id="v"></div>
+</main>
+<script>
+const K='archi-gestion-v1';
+const DEF={tc:4,cfp:0.2,vl:true,vlt:2.2,ab:34,parts:1,are:0,sjr:0,dom:false,seuil:83600,th:0};
+let S={set:{...DEF},aff:[],fac:[],tps:[]};
+try{const r=localStorage.getItem(K);if(r){const o=JSON.parse(r);S={set:{...DEF,...(o.set||{})},aff:o.aff||[],fac:o.fac||[],tps:o.tps||[]}}}catch(e){}
+const save=()=>{try{localStorage.setItem(K,JSON.stringify(S))}catch(e){}};
+let tab='syn',Y=new Date().getFullYear();
+const TABS=[['syn','Synthèse'],['aff','Affaires'],['tps','Temps'],['fac','Factures'],['set','Réglages']];
+const MOIS=['janv.','févr.','mars','avr.','mai','juin','juil.','août','sept.','oct.','nov.','déc.'];
+const uid=()=>Math.random().toString(36).slice(2,9);
+const today=()=>new Date().toISOString().slice(0,10);
+const eur=n=>(n||0).toLocaleString('fr-FR',{style:'currency',currency:'EUR',maximumFractionDigits:0});
+const eur2=n=>(n||0).toLocaleString('fr-FR',{style:'currency',currency:'EUR'});
+const num=n=>(n||0).toLocaleString('fr-FR',{maximumFractionDigits:1});
+const dfr=d=>d?d.split('-').reverse().join('/'):'';
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const affName=id=>(S.aff.find(a=>a.id===id)||{nom:'(sans affaire)'}).nom;
+
+// Barème 2026 (revenus 2025) – par part
+const TR=[[11600,0],[29579,.11],[84577,.30],[181917,.41],[Infinity,.45]];
+function impotBareme(base,parts){
+  const q=Math.max(0,base)/parts;let prev=0,t=0;
+  for(const [lim,r] of TR){if(q>prev)t+=(Math.min(q,lim)-prev)*r;prev=lim}
+  return t*parts;
+}
+function calc(y){
+  const s=S.set,ca=Array(12).fill(0);
+  S.fac.forEach(f=>{if(f.pay&&f.pay.slice(0,4)==String(y))ca[+f.pay.slice(5,7)-1]+=f.montant});
+  const m=ca.map(c=>{
+    const cot=c*(s.tc+s.cfp)/100;
+    const rev=c*(1-s.ab/100);
+    let are=s.are>0?Math.max(0,s.are-0.7*rev):0;
+    if(s.sjr>0)are=Math.min(are,Math.max(0,s.sjr-rev));
+    return{ca:c,cot,rev,are,net:c-cot+are};
+  });
+  const T=k=>m.reduce((a,x)=>a+x[k],0);
+  const caT=T('ca'),areT=T('are');
+  const baseCA=s.vl?0:caT*(1-s.ab/100);
+  const base=baseCA+areT*0.9;
+  let imp=impotBareme(base,s.parts||1);
+  if(s.dom)imp-=Math.min(imp*0.3,2450);
+  if(s.vl)imp+=caT*s.vlt/100;
+  const net=T('net')-imp;
+  return{m,caT,cotT:T('cot'),areT,imp,net,base};
+}
+
+function view(){
+  document.getElementById('nav').innerHTML=TABS.map(([k,l])=>`<button class="${tab===k?'on':''}" data-a="tab" data-v="${k}">${l}</button>`).join('');
+  document.getElementById('v').innerHTML=({syn:vSyn,aff:vAff,tps:vTps,fac:vFac,set:vSet})[tab]();
+}
+const yrBar=()=>`<div class="yr"><button data-a="yr" data-v="-1" aria-label="Année précédente">‹</button><b>${Y}</b><button data-a="yr" data-v="1" aria-label="Année suivante">›</button></div>`;
+
+function vSyn(){
+  const c=calc(Y),s=S.set;
+  const att=S.fac.filter(f=>!f.pay).reduce((a,f)=>a+f.montant,0);
+  const pct=Math.min(100,c.caT/s.seuil*100);
+  const mx=Math.max(1,...c.m.map(x=>x.ca));
+  const rows=c.m.map((x,i)=>`<tr><td>${MOIS[i]}</td><td>${x.ca?`<span class="bar" style="width:${x.ca/mx*70}px"></span> `:''}${eur(x.ca)}</td><td>${eur(x.cot)}</td><td>${s.are?eur(x.are):'–'}</td><td><b>${eur(x.net)}</b></td></tr>`).join('');
+  return `<div class="yr" style="justify-content:space-between"><h2 style="margin:0">Revenus estimés</h2>${yrBar()}</div>
+  <div class="kp" style="margin-top:10px">
+   <div class="k big"><small>Net estimé après cotisations et impôt (${Y})</small><b>${eur(c.net)}</b><small>soit environ ${eur(c.net/12)} par mois</small></div>
+   <div class="k"><small>CA encaissé</small><b>${eur(c.caT)}</b></div>
+   <div class="k"><small>Cotisations</small><b>${eur(c.cotT)}</b></div>
+   <div class="k"><small>ARE estimée</small><b>${eur(c.areT)}</b></div>
+   <div class="k"><small>Impôt estimé</small><b>${eur(c.imp)}</b></div>
+   <div class="k"><small>Facturé, à encaisser</small><b>${eur(att)}</b></div>
+  </div>
+  <h2>Plafond micro-BNC</h2>
+  <div class="k"><div class="prog"><i style="width:${pct}%"></i></div>${eur(c.caT)} sur ${eur(s.seuil)} (${num(pct)} %)</div>
+  <h2>Mois par mois</h2>
+  <div class="tw"><table><thead><tr><th>Mois</th><th>CA encaissé</th><th>Cotisations</th><th>ARE versée</th><th>Net avant impôt</th></tr></thead><tbody>${rows}</tbody>
+  <tfoot><tr><td>Total</td><td>${eur(c.caT)}</td><td>${eur(c.cotT)}</td><td>${eur(c.areT)}</td><td>${eur(c.net+c.imp)}</td></tr></tfoot></table></div>
+  <div class="note"><b>Hypothèses de calcul.</b> Le CA est compté à la date d’encaissement. Cotisations = CA × (${num(s.tc)} % + ${num(s.cfp)} % de formation). ARE du mois = ARE brute − 70 % du revenu après abattement de ${s.ab} %, plafonnée à votre ancien salaire (cumul à 100 %). L’ARE est imposée avec 10 % de frais. Impôt : barème progressif sur ${s.parts} part(s), sans plafonnement du quotient familial ni décote. Les jours non indemnisés ne sont pas reportés. Estimation indicative : renseignez vos vrais taux dans Réglages et confirmez avec France Travail et votre simulateur d’impôt.${(!s.are)?' <b>Renseignez votre ARE dans Réglages</b> pour l’inclure.':''}</div>`;
+}
+
+const PH=['ESQ – Esquisse','DIAG – Diagnostic','APS – Avant-projet sommaire','APD – Avant-projet définitif','PC – Permis de construire','PRO – Projet','DCE – Consultation des entreprises','ACT – Assistance aux marchés de travaux','VISA – Visa','DET – Direction de l’exécution','AOR – Réception'];
+function affOpts(){return S.aff.map(a=>`<optgroup label="${esc(a.nom)}"><option value="${a.id}">Affaire entière</option>${(a.ph||[]).map(p=>`<option value="${a.id}|${p.id}">${esc(p.nom)}</option>`).join('')}</optgroup>`).join('')}
+function stats(aid,m){
+  const F=S.fac.filter(f=>f.aff===aid&&m(f.ph||'')),T=S.tps.filter(t=>t.aff===aid&&m(t.ph||''));
+  return{fa:F.reduce((x,f)=>x+f.montant,0),en:F.filter(f=>f.pay).reduce((x,f)=>x+f.montant,0),h:T.reduce((x,t)=>x+t.h,0)};
+}
+const prow=(nom,pv,s,del)=>`<tr><td class="l">${nom}</td><td>${pv?eur(pv):'–'}</td><td>${eur(s.fa)}</td><td>${eur(s.en)}</td><td>${num(s.h)} h</td><td>${s.h?eur(s.fa/s.h)+'/h':'–'}</td><td>${del||''}</td></tr>`;
+function vAff(){
+  const G={p:0,fa:0,en:0,h:0},sum=[],blk=[];
+  S.aff.forEach(a=>{
+    const ph=a.ph||[],ids=ph.map(p=>p.id);
+    const pv=ph.length?ph.reduce((x,p)=>x+p.prevu,0):a.prevu;
+    const t=stats(a.id,()=>true),hp=stats(a.id,x=>!ids.includes(x));
+    G.p+=pv;G.fa+=t.fa;G.en+=t.en;G.h+=t.h;
+    sum.push(`<tr><td class="l"><b>${esc(a.nom)}</b><br><small>${esc(a.client)}</small></td><td>${eur(pv)}</td><td>${eur(t.fa)}</td><td>${eur(t.en)}</td><td>${eur(t.fa-t.en)}</td><td>${num(t.h)} h</td></tr>`);
+    const prs=ph.map(p=>prow(esc(p.nom),p.prevu,stats(a.id,x=>x===p.id),`<button class="btn d" data-a="delPh" data-v="${a.id}|${p.id}" aria-label="Supprimer la phase">✕</button>`)).join('');
+    const hr=(hp.fa||hp.h||!ph.length)?prow(ph.length?'<i>Hors phase</i>':'<i>Affaire entière</i>',ph.length?0:a.prevu,hp):'';
+    blk.push(`<h2>${esc(a.nom)} <button class="btn d" data-a="delAff" data-v="${a.id}" aria-label="Supprimer l’affaire">✕</button></h2><div class="tw"><table><thead><tr><th class="l">Phase</th><th>Prévu</th><th>Facturé</th><th>Encaissé</th><th>Temps</th><th>Taux horaire</th><th></th></tr></thead><tbody>${prs}${hr}</tbody><tfoot>${prow('Total de l’affaire',pv,t)}</tfoot></table></div><form class="f" data-f="ph" style="margin-top:8px"><input type="hidden" name="aid" value="${a.id}"><div><label>Ajouter une phase</label><input name="nom" list="phl" required placeholder="APS, PC, DET…"></div><div><label>Honoraires prévus (€)</label><input name="prevu" type="number" step="any" min="0"></div><button class="btn">Ajouter la phase</button></form>`);
+  });
+  const o=stats('',()=>true);
+  if(o.fa||o.h){G.fa+=o.fa;G.en+=o.en;G.h+=o.h;sum.push(`<tr><td class="l"><i>Sans affaire</i></td><td>–</td><td>${eur(o.fa)}</td><td>${eur(o.en)}</td><td>${eur(o.fa-o.en)}</td><td>${num(o.h)} h</td></tr>`)}
+  return `<datalist id="phl">${PH.map(p=>`<option value="${esc(p)}">`).join('')}</datalist>
+  <h2 style="margin-top:0">Nouvelle affaire</h2>
+  <form class="f" data-f="aff"><div><label>Nom de l’affaire</label><input name="nom" required></div><div><label>Client</label><input name="client"></div><div><label>Honoraires prévus (€), sans phases</label><input name="prevu" type="number" step="any" min="0"></div><button class="btn p">Ajouter l’affaire</button></form>
+  <h2>Récapitulatif de toutes les affaires</h2>
+  ${S.aff.length?`<div class="tw"><table><thead><tr><th class="l">Affaire</th><th>Prévu</th><th>CA facturé</th><th>CA encaissé</th><th>À encaisser</th><th>Temps</th></tr></thead><tbody>${sum.join('')}</tbody><tfoot><tr><td class="l">Ensemble des affaires</td><td>${eur(G.p)}</td><td>${eur(G.fa)}</td><td>${eur(G.en)}</td><td>${eur(G.fa-G.en)}</td><td>${num(G.h)} h</td></tr></tfoot></table></div>`:'<div class="empty">Aucune affaire. Créez-en une, puis découpez-la en phases.</div>'}
+  ${blk.join('')}`;
+}
+function vAffOld(){
+  const rows=S.aff.map(a=>{
+    const h=S.tps.filter(t=>t.aff===a.id).reduce((x,t)=>x+t.h,0);
+    const fa=S.fac.filter(f=>f.aff===a.id).reduce((x,f)=>x+f.montant,0);
+    const en=S.fac.filter(f=>f.aff===a.id&&f.pay).reduce((x,f)=>x+f.montant,0);
+    const th=h?fa/h:0,bud=a.prevu?fa/a.prevu*100:0,hb=a.hprev?h/a.hprev*100:0;
+    return `<tr><td class="l"><b>${esc(a.nom)}</b><br><small>${esc(a.client)}</small></td><td>${eur(a.prevu)}</td><td>${eur(fa)} <small>(${num(bud)} %)</small></td><td>${eur(en)}</td><td>${num(h)} h${a.hprev?` <small>/ ${num(a.hprev)} h</small>`:''}</td><td>${h?eur(th)+'/h':'–'}</td><td><button class="btn d" data-a="delAff" data-v="${a.id}" aria-label="Supprimer">✕</button></td></tr>`}).join('');
+  return `<h2 style="margin-top:0">Nouvelle affaire</h2>
+  <form class="f" data-f="aff"><div><label>Nom de l’affaire</label><input name="nom" required></div><div><label>Client</label><input name="client"></div><div><label>Honoraires prévus (€)</label><input name="prevu" type="number" step="any" min="0"></div><div><label>Heures prévues</label><input name="hprev" type="number" step="any" min="0"></div><button class="btn p">Ajouter l’affaire</button></form>
+  <h2>Suivi par affaire</h2>
+  <div class="tw">${S.aff.length?`<table><thead><tr><th class="l">Affaire</th><th>Prévu</th><th>Facturé</th><th>Encaissé</th><th>Temps passé</th><th>Taux horaire réel</th><th></th></tr></thead><tbody>${rows}</tbody></table>`:'<div class="empty">Aucune affaire. Ajoutez-en une pour suivre son temps et sa facturation.</div>'}</div>`;
+}
+
+function vTps(){
+  const opts=affOpts();
+  const list=[...S.tps].sort((a,b)=>b.d.localeCompare(a.d)).slice(0,60).map(t=>`<tr><td>${dfr(t.d)}</td><td class="l">${esc(affName(t.aff))}</td><td class="l">${esc(t.note)}</td><td>${num(t.h)} h</td><td><button class="btn d" data-a="delTps" data-v="${t.id}" aria-label="Supprimer">✕</button></td></tr>`).join('');
+  const yh=S.tps.filter(t=>t.d.slice(0,4)==String(Y)).reduce((a,t)=>a+t.h,0);
+  const ca=calc(Y).caT;
+  return `<h2 style="margin-top:0">Saisir du temps</h2>
+  ${S.aff.length?`<form class="f" data-f="tps"><div><label>Date</label><input name="d" type="date" value="${today()}" required></div><div><label>Affaire</label><select name="aff">${opts}</select></div><div><label>Heures</label><input name="h" type="number" step="0.25" min="0" required></div><div><label>Tâche</label><input name="note" placeholder="Plans, chantier, réunion…"></div><button class="btn p">Enregistrer</button></form>`:'<div class="empty">Créez d’abord une affaire dans l’onglet Affaires.</div>'}
+  <div class="kp" style="margin-top:12px"><div class="k"><small>Heures ${Y}</small><b>${num(yh)} h</b></div><div class="k"><small>CA encaissé par heure travaillée</small><b>${yh?eur(ca/yh):'–'}</b></div>${S.set.th?`<div class="k"><small>Objectif horaire</small><b>${eur(S.set.th)}</b></div>`:''}</div>
+  <h2>Dernières saisies</h2><div class="tw">${S.tps.length?`<table><thead><tr><th>Date</th><th class="l">Affaire</th><th class="l">Tâche</th><th>Durée</th><th></th></tr></thead><tbody>${list}</tbody></table>`:'<div class="empty">Aucune saisie de temps.</div>'}</div>`;
+}
+
+function vFac(){
+  const opts=affOpts();
+  const n=S.fac.filter(f=>f.d.slice(0,4)==String(Y)).length+1;
+  const num_=`F-${Y}-${String(n).padStart(3,'0')}`;
+  const list=[...S.fac].sort((a,b)=>b.d.localeCompare(a.d)).map(f=>`<tr><td class="l"><b>${esc(f.num)}</b></td><td>${dfr(f.d)}</td><td class="l">${esc(affName(f.aff))}<br><small>${esc(f.lib)}</small></td><td>${eur2(f.montant)}</td><td>${f.pay?`<span class="tag ok">Payée ${dfr(f.pay)}</span>`:`<span class="tag wa">En attente</span>`}</td><td>${f.pay?`<button class="btn" data-a="unpay" data-v="${f.id}">Annuler</button>`:`<button class="btn p" data-a="pay" data-v="${f.id}">Encaissée</button>`} <button class="btn d" data-a="delFac" data-v="${f.id}" aria-label="Supprimer">✕</button></td></tr>`).join('');
+  return `<h2 style="margin-top:0">Nouvelle facture</h2>
+  <form class="f" data-f="fac"><div><label>Numéro</label><input name="num" value="${num_}" required></div><div><label>Date d’émission</label><input name="d" type="date" value="${today()}" required></div><div><label>Affaire</label><select name="aff"><option value="">(aucune)</option>${opts}</select></div><div><label>Libellé</label><input name="lib" placeholder="Acompte, mission APS…"></div><div><label>Montant (€, TVA non applicable)</label><input name="montant" type="number" step="0.01" min="0" required></div><button class="btn p">Créer la facture</button></form>
+  <h2>Factures</h2><div class="tw">${S.fac.length?`<table><thead><tr><th class="l">N°</th><th>Émise</th><th class="l">Affaire</th><th>Montant</th><th>Statut</th><th></th></tr></thead><tbody>${list}</tbody></table>`:'<div class="empty">Aucune facture.</div>'}</div>
+  <div class="note">Seules les factures marquées « Encaissée » comptent dans le CA, les cotisations et l’ARE, car la micro-entreprise déclare à l’encaissement.</div>`;
+}
+
+function vSet(){
+  const s=S.set;
+  const F=(k,l,h)=>`<div><label>${l}</label><input type="number" step="any" min="0" data-set="${k}" value="${s[k]}"><small style="color:var(--mut)">${h||''}</small></div>`;
+  const C=(k,l)=>`<div><label><input type="checkbox" data-set="${k}" ${s[k]?'checked':''}> ${l}</label></div>`;
+  return `<h2 style="margin-top:0">Réglages</h2>
+  <div class="set">
+  ${F('tc','Cotisations sociales (%)','Taux réduit DOM (moins de 4 %) : saisissez votre taux exact')}
+  ${F('cfp','Contribution formation (%)','0,2 % pour les BNC')}
+  ${F('ab','Abattement forfaitaire (%)','34 % en micro-BNC')}
+  ${F('seuil','Plafond de CA annuel (€)','Micro-BNC')}
+  ${F('are','ARE brute mensuelle (€)','Allocation journalière × jours du mois')}
+  ${F('sjr','Ancien salaire brut mensuel (€)','Plafond du cumul ARE + revenus (0 = sans plafond)')}
+  ${F('parts','Parts fiscales','1 = célibataire, 2 = couple…')}
+  ${F('th','Objectif de taux horaire (€)','Facultatif')}
+  ${C('vl','Versement libératoire de l’impôt')}
+  ${s.vl?F('vlt','Taux du versement libératoire (%)','2,2 % en BNC'):''}
+  ${C('dom','Abattement d’impôt DOM (30 %, plafonné à 2 450 €)')}
+  </div>
+  <h2>Sauvegarde</h2>
+  <p class="s">Vos données restent dans ce navigateur. Exportez-les régulièrement pour les conserver ou les changer d’appareil.</p>
+  <button class="btn" data-a="export">Exporter (JSON)</button> <label class="btn" style="display:inline-block;cursor:pointer">Importer<input type="file" accept="application/json" data-a="import" hidden></label> <button class="btn d" data-a="reset">Tout effacer</button>`;
+}
+
+document.addEventListener('click',e=>{
+  const b=e.target.closest('[data-a]');if(!b||b.tagName==='INPUT')return;
+  const a=b.dataset.a,v=b.dataset.v;
+  if(a==='tab')tab=v;
+  else if(a==='yr')Y+=+v;
+  else if(a==='delAff'){if(!confirm('Supprimer cette affaire ?'))return;S.aff=S.aff.filter(x=>x.id!==v)}
+  else if(a==='delPh'){const[x,y]=v.split('|'),A=S.aff.find(z=>z.id===x);A.ph=(A.ph||[]).filter(p=>p.id!==y)}
+  else if(a==='delTps')S.tps=S.tps.filter(x=>x.id!==v);
+  else if(a==='delFac'){if(!confirm('Supprimer cette facture ?'))return;S.fac=S.fac.filter(x=>x.id!==v)}
+  else if(a==='pay'){const f=S.fac.find(x=>x.id===v);const d=prompt('Date d’encaissement (AAAA-MM-JJ)',today());if(!d||!/^\d{4}-\d{2}-\d{2}$/.test(d))return;f.pay=d}
+  else if(a==='unpay'){S.fac.find(x=>x.id===v).pay=''}
+  else if(a==='export'){const u=URL.createObjectURL(new Blob([JSON.stringify(S,null,1)],{type:'application/json'}));const l=document.createElement('a');l.href=u;l.download='gestion-architecte.json';l.click();return}
+  else if(a==='reset'){if(!confirm('Effacer toutes les données ?'))return;S={set:{...DEF},aff:[],fac:[],tps:[]}}
+  save();view();
+});
+document.addEventListener('submit',e=>{
+  e.preventDefault();const f=e.target,d=Object.fromEntries(new FormData(f)),k=f.dataset.f;
+  if(k==='aff')S.aff.push({id:uid(),nom:d.nom,client:d.client,prevu:+d.prevu||0,ph:[]});
+  if(k==='ph'){const A=S.aff.find(a=>a.id===d.aid);(A.ph=A.ph||[]).push({id:uid(),nom:d.nom,prevu:+d.prevu||0})}
+  if(k==='tps')S.tps.push({id:uid(),d:d.d,aff:d.aff.split('|')[0],ph:d.aff.split('|')[1]||'',h:+d.h||0,note:d.note});
+  if(k==='fac')S.fac.push({id:uid(),num:d.num,d:d.d,aff:d.aff.split('|')[0],ph:d.aff.split('|')[1]||'',lib:d.lib,montant:+d.montant||0,pay:''});
+  save();view();
+});
+document.addEventListener('change',e=>{
+  const t=e.target;
+  if(t.dataset.set){S.set[t.dataset.set]=t.type==='checkbox'?t.checked:(parseFloat(t.value)||0);save();if(t.type==='checkbox')view()}
+  if(t.dataset.a==='import'&&t.files[0]){const r=new FileReader();r.onload=()=>{try{const o=JSON.parse(r.result);S={set:{...DEF,...(o.set||{})},aff:o.aff||[],fac:o.fac||[],tps:o.tps||[]};save();view()}catch(x){alert('Fichier invalide.')}};r.readAsText(t.files[0])}
+});
+view();
+if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}))}
+</script>
+</body>
+</html>
